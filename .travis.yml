@@ -1,0 +1,28 @@
+sudo: required
+language: generic
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+before_install:
+  - docker build -t itzkaustubh/multi-docker -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true itzkaustubh/multi-docker npm test -- --coverage
+
+after_success:
+  - docker build -t itzkaustubh/multi-client ./client
+  - docker build -t itzkaustubh/multi-nginx ./ngnix
+  - docker build -t itzkaustubh/multi-server ./server
+  - docker build -t itzkaustubh/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push itzkaustubh/multi-client
+  - docker push itzkaustubh/multi-ngnix
+  - docker push itzkaustubh/multi-server
+  - docker push itzkaustubh/multi-worker
